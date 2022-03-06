@@ -1,29 +1,45 @@
 //
-//  ViewController.swift
+//  MovieGridViewController.swift
 //  Flix
 //
-//  Created by ALBERT TADROS on 2/27/22.
+//  Created by ALBERT TADROS on 3/5/22.
 //
 
 import UIKit
 import AlamofireImage
 
-class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MovieGridViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
     
-    @IBOutlet weak var tableView: UITableView!
     
-    var movies  = [[String:Any]]() // an array of dictionaries to store movies data from api
     
-
+    //variables
+    var movies = [[String:Any]]()
+    
+    // outlets
+  
+    @IBOutlet weak var collectionView: UICollectionView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.dataSource = self
-        tableView.delegate = self
         
-        // Do any additional setup after loading the view.
-        print("Hello")
-        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
+
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.frame = view.bounds
+        
+        let layout = collectionView.collectionViewLayout as! UICollectionViewFlowLayout
+        layout.minimumLineSpacing = 1
+        layout.minimumInteritemSpacing = 1
+
+//        let widthofCell = (view.frame.size.width - (layout.minimumInteritemSpacing * 2)) / 3 // the width of one collection cell. note the divion by 3 indicates that each horizontal row (width)  in the collection view will carry 3 cells
+//
+//        layout.itemSize = CGSize(width: 140, height: 210 ) // the  math here is just for better layout
+//
+//        print("view.frame.size.width", widthofCell)
+//
+        
+        let url = URL(string: "https://api.themoviedb.org/3/movie/634649/similar?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         let task = session.dataTask(with: request) { (data, response, error) in
@@ -40,49 +56,43 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                  self.movies = dataDictionary["results"] as! [[String:Any]] // assining results dictionary to movies.. note the use of (as!)
                  print("Movies Dic" , self.movies)
                  
-                 self.tableView.reloadData() // asking tableview to keep reloading after fetching took its time and happened, then tableView should recieve data for (movies.count).In initial rendering, tableView does not recieve any movies.count because fetching didn't happend at this point.
-                 
-                 // TODO: Store the movies in a property to use elsewhere
-                // TODO: Reload your table view data
+                 self.collectionView.reloadData()
 
              }
         }
-        task.resume()
-
+    task.resume()
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { // it returns the number of rows(cells) in table
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return movies.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell { // it returns the content to be viewed in each row(cell)
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell") as! MovieCell
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        let movie = movies[indexPath.row]
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieGridCell", for: indexPath) as! MovieGridCell
         
-        let title = movie["original_title"] as! String // getting movie title
-        let synopsis = movie["overview"] as! String // getting overview
-        
-        
-        cell.titleLabel.text = title
-        cell.synopsisLabel.text = synopsis
-        
+        let movie = movies[indexPath.item] // getting all data about the movie in cell with ( the given indexpath) 
         let baseURL = "https://image.tmdb.org/t/p/original"
         let posterPath = movie["poster_path"] as! String
         let posterURL = URL(string: baseURL +  posterPath)!
         
-        //print("Poster URL:", posterURL)
         cell.posterView.af.setImage(withURL: posterURL)
         
         return cell
     }
     
+    
+    // Bouns Question
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        //print("Loading up the details")
+        print("Loading up the details")
+        
+       
         
         // Find the selected movies    (through the sender)
-        let cell = sender as! UITableViewCell   // the sender is the selected tableview cell
-        let indexPath = tableView.indexPath(for: cell)! // getting the indexpath of the selected cell
+        let cell = sender as! UICollectionViewCell   // the sender is the selected tableview cell
+        let indexPath = collectionView.indexPath(for: cell)! // getting the indexpath of the selected cell
         let movie = movies[indexPath.row] // getting data of selected movie through its indexpath
          
         // pass the selected movie details to the details screen (through the segue)
@@ -90,9 +100,13 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         let detailsViewController = segue.destination as! MovieDetailsViewController // object to the class MovieDetailsViewController to access its properties
         detailsViewController.movieDetails = movie // PASS data from here to movieDetails property of the navigated screen (MovieDetailsViewController)
         
-        tableView.deselectRow(at: indexPath, animated: true)
+        collectionView.deselectItem(at: indexPath, animated: true)
     }
-
+    
+    
+    
+    
+    
+    
 
 }
-
