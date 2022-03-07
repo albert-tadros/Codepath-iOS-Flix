@@ -1,4 +1,4 @@
-# Codepath-iOS-Flix-Unit-1
+# Codepath-iOS-Flix
 
 # Flix
 
